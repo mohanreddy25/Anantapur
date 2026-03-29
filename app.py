@@ -933,10 +933,8 @@ with right_col:
 
     folium.LayerControl(position='bottomright').add_to(m)
     st.markdown("<div class='map-container'>", unsafe_allow_html=True)
-    map_placeholder = st.empty()
-
-    with map_placeholder:
-        st_folium(m, width=950, height=650, returned_objects=[])
+   
+    st_folium(m, width=950, height=650, returned_objects=[])
     st.markdown("</div>", unsafe_allow_html=True)
 
     # ---- CLASSICAL vs QUANTUM COMPARISON (below map, inside right col) ----
@@ -1067,47 +1065,38 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# --- SIMULATION LOOP (FIXED - SMOOTH) ---
+# --- SIMULATION LOOP ---
 if st.session_state.live_sim and not st.session_state.get('checkpoint_wait', False):
-
     hub_coords_list = [list(c) for c in atp_hubs]
-
     for v_id in st.session_state.vehicle_data:
         v_ptr = st.session_state.vehicle_data[v_id]
         path_len = len(v_ptr["path"])
-
         if path_len > 0:
             # Advance progress
             new_progress = (v_ptr["progress"] + 1) % path_len
             st.session_state.vehicle_data[v_id]["progress"] = new_progress
-
-            # AUTH LOCATIONS
+            
+            # COMBINED HUB & HOTSPOT AUTH LOGIC (All locations must and shouldly)
             auth_locations = hub_coords_list.copy()
             if 'ai_hotspots' in st.session_state:
                 auth_locations.extend([list(h) for h in st.session_state.ai_hotspots])
-
+            
             current_pos = v_ptr["path"][new_progress]
-
             for loc in auth_locations:
+                # Threshold for "Reached Location" - Approx 20 meters
                 dist = math.sqrt((current_pos[0]-loc[0])**2 + (current_pos[1]-loc[1])**2)
-
-                if dist < 0.0002:
+                if dist < 0.0002: # Found a critical location
                     loc_tuple = tuple(loc)
-
+                    # Force authentication at ALL designated locations
                     if loc_tuple not in st.session_state.visited_checkpoints:
                         st.session_state.checkpoint_wait = True
                         st.session_state.current_verifying_unit = v_id
                         st.session_state.step = 'checkpoint_verify'
-
-                        # ✅ keep rerun ONLY for navigation
                         st.rerun()
-
-        # Simulate incidents
-        if random.random() < 0.1:
+            
+        # Increment dynamic incidents to simulate new reports while patrolling
+        if random.random() < 0.1: # 10% chance per step
             st.session_state.simulated_extra_incidents += 1
-
-    time.sleep(1)
-
-    # ❌ REMOVE st.rerun()
-    # ✅ Replace with this (soft refresh)
-    st.experimental_set_query_params(_=int(time.time()))
+                    
+    time.sleep(1) # Live GPS update rate
+    st.rerun()

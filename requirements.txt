@@ -1,7 +1,13 @@
 streamlit
 folium
 streamlit-folium
+osmnx
+networkx
+numpy
+matplotlib
+scikit-learn
 requests
+osmnx==1.3.0
 pandas
 geopy
 qiskit

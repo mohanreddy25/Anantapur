@@ -933,7 +933,10 @@ with right_col:
 
     folium.LayerControl(position='bottomright').add_to(m)
     st.markdown("<div class='map-container'>", unsafe_allow_html=True)
-    st_folium(m, width=950, height=650, returned_objects=[])
+    map_placeholder = st.empty()
+
+    with map_placeholder:
+        st_folium(m, width=950, height=650, returned_objects=[])
     st.markdown("</div>", unsafe_allow_html=True)
 
     # ---- CLASSICAL vs QUANTUM COMPARISON (below map, inside right col) ----
